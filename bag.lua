@@ -1,10 +1,8 @@
 display.setStatusBar( display.HiddenStatusBar )
 
 --[[ to do still
-1. get the actual global information and concatenate those on the appropriate db calls, strings, etc.
-2. when the user answers all the questions correctly, show a quick animation of the card being shrunk and added to their pack of cards.
-3. insert the menubar at the bottom of the screen
-4. Show an animation of the transition between answering a new question (onSuccess) and simply going to the bag
+1. when the user answers all the questions correctly, show a quick animation of the card being shrunk and added to their pack of cards.
+2. insert the menubar at the bottom of the screen
 ]]
 
 module(..., package.seeall)

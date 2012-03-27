@@ -353,16 +353,10 @@ end
 		if(event.phase == "moved") then
 			local dx = math.abs( event.x - event.xStart )
 			local dy = math.abs( event.y - event.yStart )
-			-- Get position of scroll view to mark coordinates for array
-			print (scrollView:getScrollPosition())
 			-- if finger drags button more than 5 pixels, pass focus to scrollView
 			if dx > 5 or dy > 5 then
 				scrollView:takeFocus( event )
 			end
-			
-			local currentContentPos = scrollView:getContentPosition()
-			print ( currentContentPos )
-			
 		elseif(event.phase == "ended") then
 			audio.play(click)
 			director:changeScene(params,event.target.scene,"fade")
