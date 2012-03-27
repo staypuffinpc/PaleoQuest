@@ -9,8 +9,8 @@ application =
 		yAlign = "top",
 		imageSuffix =
 		{
-			["@2"] = 2,
-			["@3"] = 3
+			["@2x"] = 2,
+			["@3x"] = 3
 		},
 	},
 }

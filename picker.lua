@@ -187,7 +187,7 @@ local function autoWrappedText(text, font, size, color, width)
 function listButtonRelease( event )
 		self = event.target
 		id = self.id
-				print(self.id)
+				print("Quest ID: "..self.id)
 		questID = id
 				
 		dTitle = data[id].qTitle

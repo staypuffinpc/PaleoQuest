@@ -30,6 +30,7 @@ local function onSystemEvent(event)
 		user_database:close()
 	end
 end
+
 local prog_id
 
 -- Find the user's progress for this quest
@@ -102,6 +103,7 @@ end
 	
 
 	local click = audio.loadSound("click.wav")
+--[[
 	local menuDescr
 	if numberCompleted == 0 then
 	 menuDescr = "Hello! Meet me here to see your first clue."
@@ -111,20 +113,161 @@ end
 	 menuDescr = "Well Done! Now meet me here."
 	end
 	local menuInstr = " "
+]]	
 	
-	local bg = display.newImageRect("images/map.png", 320, 372)
-	bg:setReferencePoint(display.CenterReferencePoint)
-	bg.x = bg.width/2
-	bg.y = bg.height/2 + 54
-	localGroup:insert(bg)
+-----------------------------------------------------------------------------------------------------------------------------
+
+-- Start map stuff
+
+-----------------------------------------------------------------------------------------------------------------------------
 	
+	
+	-- Load large map image and make it scrollable
+	
+	local widget = require "widget"
+	
+	--Calculate and display max Texture size
+	local tileWorldSize = system.getInfo("maxTextureSize")
+	print ("Maximum dimensions of Tile World: "..tileWorldSize.."px x "..tileWorldSize.."px")
+
+	-- Set image sheet options - width, height, and number of frames = rect image info
+	local options =
+	{
+		width = 128,
+		height = 128,
+		numFrames = 256,
+
+		-- Retina image info
+
+		sheetContentWidth = 2048, -- width of original 1x size of entire sheet
+		sheetContentHeight = 2048 -- height of original 1x size of entire sheet
+	}
+
+	-- Create image sheet from image and load into variable
+	local imageSheet = graphics.newImageSheet ("images/museum.png", options)
+	iW = sheetContentWidth
+	iH = sheetContentHeight
+
+	-- Create display group
+	local imageGroup = display.newImageGroup (imageSheet)
+
+	--function to get position of tapped tile
+	local function tileInfo (event)
+		local tile = event.target
+		print ("Tile "..tile.id.."\n".."Position: "..tile.x.."x, "..tile.y.."y")
+	end
+
+	--Dynamically generate and position tiles of image sheet
+	for i=1,256 do
+		local mapTile = display.newImageRect (imageSheet, i, 128, 128)
+		mapTile.id = i
+		
+		mapTile:setReferencePoint( display.TopLeftReferencePoint )
+		
+		--dynamically generate the y-offset for each row
+		if i < 17 then
+			y = 0
+		else
+			y = (math.floor ( (i-1)/16 )) * 128
+		end
+		mapTile.y = y
+		
+		--dynamically cerate the x-offset for each collumn
+		x = math.floor(((i-1)%16)*128)
+		mapTile.x = x	
+		
+		imageGroup:insert ( mapTile )
+
+		
+		--add event listener to make tile into a button
+		mapTile:addEventListener("touch", tileInfo)
+	end
+--[[
+	local function getPos (event)
+		if event.phase = "ended" then
+			print( self.x.."x, "..self.y.."y" )
+		end
+	end
+	Runtime:addEventListener("touch", getPos)
+]]
+
+	-- Position image group
+	imageGroup.y = 0
+	imageGroup.x = 0
+
+	--Destroy globals to clean up memory
+	y = nil
+	x = nil
+
+
+-----------------------------------------------------------------------------------------------------------------------------
+
+-- I need to get the array function worked out
+
+-----------------------------------------------------------------------------------------------------------------------------	
+
+
+
+
+
+
+
+	-- Create a new ScrollView widget and insert imageGroup:
+	local scrollView = widget.newScrollView{
+		width = display.contentWidth,
+		height = display.contentHeight - 54,
+		scrollWidth = iW,
+		scrollHeight = iH,
+		-- start the avatar at the front door of the museum
+		left = 0,
+		top = 0,
+		listener = scrollViewListener
+	}
+	scrollView:insert( imageGroup )
+	
+	local currentContentPos = scrollView:getContentPosition()
+	print ( currentContentPos )
+	
+	-- Create a function that takes as its arguments map coordinates to simulate moving the avatar to a new position	
+	local dx = {-800}
+	local dy = {-1600}
+	
+	
+	local function moveDino ()
+		
+		scrollView.content.x = dx[1]
+		scrollView.content.y = dy[1]
+--		scrollView:scrollToPosition( dX[1], dY[1], 10 )
+
+	end
+	
+	local tmrDinoMove = timer.performWithDelay (0, moveDino, 1)
+
+	localGroup:insert (scrollView)
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+-----------------------------------------------------------------------------------------------------------------------------
+
+-- End map stuff
+
+-----------------------------------------------------------------------------------------------------------------------------	
+	
+	-- Load bottom bar image and icon buttons
 	local bottombar = display.newImageRect("images/bottombar320x54.png", 320, 54)
 	bottombar:setReferencePoint(display.CenterReferencePoint)
 	bottombar.x = bottombar.width/2
 	bottombar.y = _H - 27
 	localGroup:insert(bottombar)
 	
-
 	local btn_picker = display.newImageRect("images/btn_picker44x44.png", 44, 44)
 	btn_picker:setReferencePoint(display.CenterReferencePoint)
 	btn_picker.x = bottombar.width/6
@@ -146,6 +289,7 @@ end
 	btn_bag.scene = "bag"
 	localGroup:insert(btn_bag)
 	
+	-- Wrap text function (way too long in my opinion...)
 	local function autoWrappedText(text, font, size, color, width)
 	--print("text: " .. text)
 	  if text == '' then return false end
@@ -204,20 +348,35 @@ end
 	  return result
 	end
 
-	
+	-- Change scene when you click on the dinosaur
 	function changeScene(event)
-		if(event.phase == "ended") then
+		if(event.phase == "moved") then
+			local dx = math.abs( event.x - event.xStart )
+			local dy = math.abs( event.y - event.yStart )
+			-- Get position of scroll view to mark coordinates for array
+			print (scrollView:getScrollPosition())
+			-- if finger drags button more than 5 pixels, pass focus to scrollView
+			if dx > 5 or dy > 5 then
+				scrollView:takeFocus( event )
+			end
+			
+			local currentContentPos = scrollView:getContentPosition()
+			print ( currentContentPos )
+			
+		elseif(event.phase == "ended") then
 			audio.play(click)
 			director:changeScene(params,event.target.scene,"fade")
 		end
+		
+		return true
 	end
 	
 	btn_picker:addEventListener("touch", changeScene)
 	btn_map:addEventListener("touch", changeScene)
 	btn_bag:addEventListener("touch", changeScene)
-	
-	
-	
+
+
+--[[	
 	local myInstr = autoWrappedText(menuInstr, native.systemFont, 18, {100, 30, 30}, display.contentWidth - 25);
 	myInstr:setReferencePoint(display.CenterReferencePoint)
 	myInstr.x = bottombar.width/2
@@ -278,19 +437,20 @@ end
 			locationYDivisor = 7
 		end
 	end
-	print("Location X "..locationXDivisor)
-	print("Location Y "..locationYDivisor)
+--	print("Location X "..locationXDivisor)
+--	print("Location Y "..locationYDivisor)
 
+	-- Make clickable dinosaur to advance to question screen
 	markerGroup = display.newGroup()
 	
 	local marker = display.newImageRect("images/avatar_"..avatarColor..".png", 64, 44)
 	marker:setReferencePoint(display.CenterReferencePoint)
 	marker.x = _W/8*locationXDivisor
 	marker.y = _H/16*locationYDivisor
-	
+
+
 	local myDescr = autoWrappedText(menuDescr, native.systemFont, 14, {0,0,0}, display.contentWidth/3);
 	myDescr:setReferencePoint(display.TopLeftReferencePoint)
-	
 	myDescr.y = marker.y + 15
 	local wordBalloon
 	if (locationXDivisor > 4) then
@@ -304,6 +464,7 @@ end
 	markerGroup:insert(wordBalloon)
 	markerGroup:insert(myDescr)
 	markerGroup:insert(marker)
+	
 	--data driven indicator of question type
 	if params.questionType == 3 then
 		markerGroup.scene = "draggable"
@@ -316,6 +477,8 @@ end
 	end
 	localGroup:insert(markerGroup)
 	markerGroup:addEventListener("touch", changeScene)
+]]		
+	
 	
 	return localGroup
 end

@@ -72,6 +72,9 @@ print("the progress ID is:" .. questInfo.progress_id)
 userDB:close()
 -------------------------// end db stuff //------------------------------
 
+
+-------------------------// Start mask stuff //------------------------------
+
 --function to add a mask to a puzzle piece.  
 function createPuzzlePiece(puzzleImg,maskImg) 
 	--get puzzle image
@@ -93,6 +96,7 @@ function createPuzzlePiece(puzzleImg,maskImg)
 end
 
 function new()
+
 	localGroup = display.newGroup()
 			
 		--create the puzzle image	
