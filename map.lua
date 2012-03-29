@@ -2,109 +2,110 @@
 print ("This is _H: ".._H)
 module(..., package.seeall)
 
+local widget = require "widget"
+
 function new(params)
 
--- create variable to represent hunt as it will be passed from previous screen
+	-- create variable to represent hunt as it will be passed from previous screen
 
-local questID = _G.questID
-local userID = _G.userID
-local avatarID = _G.avatarID
+	local questID = _G.questID
+	local userID = _G.userID
+	local avatarID = _G.avatarID
 
-local localGroup = display.newGroup()
-	
--- include sqlite library
-require "sqlite3"
+	local localGroup = display.newGroup()
+		
+	-- include sqlite library
+	require "sqlite3"
 
---set the database paths
-local dbpath = system.pathForFile("tp_quests.sqlite")
-local dbpath2 = system.pathForFile("tp_user.sqlite")
+	--set the database paths
+	local dbpath = system.pathForFile("tp_quests.sqlite")
+	local dbpath2 = system.pathForFile("tp_user.sqlite")
 
---open dbs
-database = sqlite3.open(dbpath)
-user_database = sqlite3.open(dbpath2)
+	--open dbs
+	database = sqlite3.open(dbpath)
+	user_database = sqlite3.open(dbpath2)
 
---handle the applicationExit to close the db
-local function onSystemEvent(event)
-	if(event.type == "applicationExit") then
-		database:close()
-		user_database:close()
+	--handle the applicationExit to close the db
+	local function onSystemEvent(event)
+		if(event.type == "applicationExit") then
+			database:close()
+			user_database:close()
+		end
 	end
-end
 
-local prog_id
+	local prog_id
 
--- Find the user's progress for this quest
-local sql = "SELECT prog_id FROM progress WHERE user_id = 1 AND quest_id = "..questID
-for row in user_database:nrows(sql) do
-	prog_id = row.prog_id
-	print ("The progress id is established: "..prog_id)
-	_G.prog_id = row.prog_id
-end
-
-
---get completed question IDs
-sql = "SELECT question_completed FROM questions_completed WHERE progress_id = "..prog_id
-local i = 1
-local unavailableQuestions = {}
-for row in user_database:nrows(sql) do
-	unavailableQuestions[i] = row.question_completed
-	print ("The question is unavailable: "..i..": "..row.question_completed)
-	i = i+1
-end
+	-- Find the user's progress for this quest
+	local sql = "SELECT prog_id FROM progress WHERE user_id = 1 AND quest_id = "..questID
+	for row in user_database:nrows(sql) do
+		prog_id = row.prog_id
+		print ("The progress id is established: "..prog_id)
+		_G.prog_id = row.prog_id
+	end
 
 
+	--get completed question IDs
+	sql = "SELECT question_completed FROM questions_completed WHERE progress_id = "..prog_id
+	local i = 1
+	local unavailableQuestions = {}
+	for row in user_database:nrows(sql) do
+		unavailableQuestions[i] = row.question_completed
+		print ("The question is unavailable: "..i..": "..row.question_completed)
+		i = i+1
+	end
 
---get question IDs
-local sql = "SELECT question_id FROM quest_questions WHERE quest_id = "..questID.." AND question_id NOT IN ( "
-i=1
-for k,v in ipairs(unavailableQuestions) do
-	sql = sql..unavailableQuestions[i]..","
-	i=i+1
-end
-local numberCompleted = i-1
-sql = string.sub(sql,1,-2)
-sql = sql..")"
-print (sql.." Minus the last comma")
 
-i=1
-local questionTable = {}
-questionTable[1] = 0
-for row in database:nrows(sql) do	
-	questionTable[i] = row.question_id
-	print("Question table -- "..questionTable[i])
-	i = i+1
-end
+	--get question IDs
+	local sql = "SELECT question_id FROM quest_questions WHERE quest_id = "..questID.." AND question_id NOT IN ( "
+	i=1
+	for k,v in ipairs(unavailableQuestions) do
+		sql = sql..unavailableQuestions[i]..","
+		i=i+1
+	end
+	local numberCompleted = i-1
+	sql = string.sub(sql,1,-2)
+	sql = sql..")"
+	print (sql.." Minus the last comma")
 
-local questionsRemaining = i - 1
-print("It breaks here? " .. questionsRemaining .. " And more to boot")
---get question information
--- Find out which questions remain to be completed from the quest
-
-print("Why stop there?")
-
--- Choose which question to deliver)
-local params = {}
-if questionsRemaining ~= 0 then
-	local sql = "SELECT question_type,question_location_id FROM questions WHERE question_id = "..questionTable[1]
-	print (sql)
-	params ={
-		questionID = questionTable[1]
-		}
+	i=1
+	local questionTable = {}
+	questionTable[1] = 0
 	for row in database:nrows(sql) do	
-		params.questionType = row.question_type
-		params.question_location = row.question_location_id
+		questionTable[i] = row.question_id
+		print("Question table -- "..questionTable[i])
+		i = i+1
 	end
-else 
-	params.questionType = 0
-	params.question_location = 3
-end
-	
--- create variable to select correct question to advance to on next screen
-	
 
+	local questionsRemaining = i - 1
+	print("It breaks here? " .. questionsRemaining .. " And more to boot")
+	--get question information
+	-- Find out which questions remain to be completed from the quest
+
+	print("Why stop there?")
+
+	-- Choose which question to deliver)
+	local params = {}
+	if questionsRemaining ~= 0 then
+		local sql = "SELECT question_type,question_location_id FROM questions WHERE question_id = "..questionTable[1]
+		print (sql)
+		params ={
+			questionID = questionTable[1]
+			}
+		for row in database:nrows(sql) do	
+			params.questionType = row.question_type
+			params.question_location = row.question_location_id
+		end
+	else 
+		params.questionType = 0
+		params.question_location = 3
+	end
+		
+	-- create variable to select correct question to advance to on next screen
+		
 	local click = audio.loadSound("click.wav")
---[[
+
 	local menuDescr
+
 	if numberCompleted == 0 then
 	 menuDescr = "Hello! Meet me here to see your first clue."
 	elseif questionsRemaining == 0 then
@@ -112,8 +113,9 @@ end
 	else
 	 menuDescr = "Well Done! Now meet me here."
 	end
+
 	local menuInstr = " "
-]]	
+
 	
 -----------------------------------------------------------------------------------------------------------------------------
 
@@ -123,13 +125,6 @@ end
 	
 	
 	-- Load large map image and make it scrollable
-	
-	local widget = require "widget"
-	
-	--Calculate and display max Texture size
-	local tileWorldSize = system.getInfo("maxTextureSize")
-	print ("Maximum dimensions of Tile World: "..tileWorldSize.."px x "..tileWorldSize.."px")
-
 	-- Set image sheet options - width, height, and number of frames = rect image info
 	local options =
 	{
@@ -161,7 +156,6 @@ end
 	for i=1,256 do
 		local mapTile = display.newImageRect (imageSheet, i, 128, 128)
 		mapTile.id = i
-		
 		mapTile:setReferencePoint( display.TopLeftReferencePoint )
 		
 		--dynamically generate the y-offset for each row
@@ -182,14 +176,6 @@ end
 		--add event listener to make tile into a button
 		mapTile:addEventListener("touch", tileInfo)
 	end
---[[
-	local function getPos (event)
-		if event.phase = "ended" then
-			print( self.x.."x, "..self.y.."y" )
-		end
-	end
-	Runtime:addEventListener("touch", getPos)
-]]
 
 	-- Position image group
 	imageGroup.y = 0
@@ -206,16 +192,10 @@ end
 
 -----------------------------------------------------------------------------------------------------------------------------	
 
-
-
-
-
-
-
 	-- Create a new ScrollView widget and insert imageGroup:
 	local scrollView = widget.newScrollView{
 		width = display.contentWidth,
-		height = display.contentHeight - 54,
+		height = display.contentHeight - 50,
 		scrollWidth = iW,
 		scrollHeight = iH,
 		-- start the avatar at the front door of the museum
@@ -223,10 +203,8 @@ end
 		top = 0,
 		listener = scrollViewListener
 	}
-	scrollView:insert( imageGroup )
 	
-	local currentContentPos = scrollView:getContentPosition()
-	print ( currentContentPos )
+	scrollView:insert( imageGroup )
 	
 	-- Create a function that takes as its arguments map coordinates to simulate moving the avatar to a new position	
 	local dx = {-800}
@@ -234,24 +212,13 @@ end
 	
 	
 	local function moveDino ()
-		
 		scrollView.content.x = dx[1]
 		scrollView.content.y = dy[1]
---		scrollView:scrollToPosition( dX[1], dY[1], 10 )
-
 	end
 	
 	local tmrDinoMove = timer.performWithDelay (0, moveDino, 1)
 
 	localGroup:insert (scrollView)
-	
-	
-	
-	
-	
-	
-	
-	
 	
 	
 	
@@ -261,7 +228,74 @@ end
 
 -----------------------------------------------------------------------------------------------------------------------------	
 	
+-----------------------------------------------------------------------------------------------------------------------------
+
+-- I need to get the director:changeScene method to work when the button is pushed...
+
+-----------------------------------------------------------------------------------------------------------------------------		
+	
 	-- Load bottom bar image and icon buttons
+	
+	local function onBtnPress( event )
+	
+		if (event.name == "tabButtonPress") then
+			print (event.target.id)
+			audio.play(click)
+			director:changeScene(params,event.target.id,"fade")
+		elseif (event.phase == "moved") then
+			local dx = math.abs( event.x - event.xStart )
+			local dy = math.abs( event.y - event.yStart )
+			-- if finger drags button more than 5 pixels, pass focus to scrollView
+			if dx > 5 or dy > 5 then
+				scrollView:takeFocus( event )
+			end
+		end
+		
+		return true
+    end
+ 
+    local tabButtons = {
+        {
+			id = "picker",
+			baseDir = system.ResourceDirectory,
+			--label="quests",
+            up="images/btn_picker44x44.png",
+            down="images/btn_picker44x44.png",
+            width=44, height=44,
+            onPress=onBtnPress,
+            --selected=true,
+			scene = "picker"
+        },
+        {
+			id = "map",
+			baseDir = system.ResourceDirectory,
+			--label="map",
+            up="images/btn_map44x44.png",
+			down="images/btn_map44x44.png",
+            width=44, height=44,
+            onPress=onBtnPress,
+			scene = "map"
+        },
+		 {	
+			id = "bag",
+			baseDir = system.ResourceDirectory,
+			--label="cards",
+            up="images/btn_bag44X44.png",
+			down="images/btn_bag44X44.png",
+            width=44, height=44,
+            onPress=onBtnPress,
+			scene = "bag"
+        },
+    }
+	
+    local bottomBar = widget.newTabBar{
+		baseDir = system.ResourceDirectory,
+		background = "images/bottombar320x54.png",
+        top=display.contentHeight - 50,
+        buttons=tabButtons
+    }	
+	
+--[[	
 	local bottombar = display.newImageRect("images/bottombar320x54.png", 320, 54)
 	bottombar:setReferencePoint(display.CenterReferencePoint)
 	bottombar.x = bottombar.width/2
@@ -288,9 +322,13 @@ end
 	btn_bag.y = bottombar.y
 	btn_bag.scene = "bag"
 	localGroup:insert(btn_bag)
+
+	
+-----------------------------------------------------------------------------------------------------------------------------	
+	
 	
 	-- Wrap text function (way too long in my opinion...)
-	local function autoWrappedText(text, font, size, color, width)
+	local function autoWrappedText (text, font, size, color, width)
 	--print("text: " .. text)
 	  if text == '' then return false end
 	  font = font or native.systemFont
@@ -348,6 +386,7 @@ end
 	  return result
 	end
 
+
 	-- Change scene when you click on the dinosaur
 	function changeScene(event)
 		if(event.phase == "moved") then
@@ -370,7 +409,7 @@ end
 	btn_bag:addEventListener("touch", changeScene)
 
 
---[[	
+
 	local myInstr = autoWrappedText(menuInstr, native.systemFont, 18, {100, 30, 30}, display.contentWidth - 25);
 	myInstr:setReferencePoint(display.CenterReferencePoint)
 	myInstr.x = bottombar.width/2
@@ -471,8 +510,9 @@ end
 	end
 	localGroup:insert(markerGroup)
 	markerGroup:addEventListener("touch", changeScene)
-]]		
 	
+]]	
 	
 	return localGroup
 end
+
