@@ -2,13 +2,13 @@
 
 module(..., package.seeall)
 
+local widget = require "widget"
 
 
 local questionDescription
 local qID
 local correct
 local choices
-local successMessage
 
 
 new = function (params)
@@ -77,65 +77,6 @@ for row in db:nrows(sqlQuery) do
 local correct_wav = audio.loadSound("correct.wav")
 local incorrect_wav = audio.loadSound("incorrect.wav")
 
-
-local function autoWrappedText(text, font, size, color, width)
---print("text: " .. text)
-  if text == '' then return false end
-  font = font or native.systemFont
-  size = tonumber(size) or 12
-  color = color or {255, 255, 255}
-  width = width or display.stageWidth
- 
-  local result = display.newGroup()
-  local lineCount = 0
-  -- do each line separately
-  for line in string.gmatch(text, "[^\n]+") do
-    local currentLine = ''
-    local currentLineLength = 0 -- the current length of the string in chars
-    local currentLineWidth = 0 -- the current width of the string in pixs
-    local testLineLength = 0 -- the target length of the string (starts at 0)
-    -- iterate by each word
-    for word, spacer in string.gmatch(line, "([^%s%-]+)([%s%-]*)") do
-      local tempLine = currentLine..word..spacer
-      local tempLineLength = string.len(tempLine)
-      -- test to see if we are at a point to try to render the string
-      if testLineLength > tempLineLength then
-        currentLine = tempLine
-        currentLineLength = tempLineLength
-      else
-        -- line could be long enough, try to render and compare against the max width
-        local tempDisplayLine = display.newText(tempLine, 0, 0, font, size)
-        local tempDisplayWidth = tempDisplayLine.width
-        tempDisplayLine:removeSelf();
-        tempDisplayLine=nil;
-        if tempDisplayWidth <= width then
-          -- line not long enough yet, save line and recalculate for the next render test
-          currentLine = tempLine
-          currentLineLength = tempLineLength
-          testLineLength = math.floor((width*0.9) / (tempDisplayWidth/currentLineLength))
-        else
-          -- line long enough, show the old line then start the new one
-          local newDisplayLine = display.newText(currentLine, 0, (size * 1.3) * (lineCount - 1), font, size)
-          newDisplayLine:setTextColor(color[1], color[2], color[3])
-          result:insert(newDisplayLine)
-          lineCount = lineCount + 1
-          currentLine = word..spacer
-          currentLineLength = string.len(word)
-        end
-      end
-    end
-    -- finally display any remaining text for the current line
-    local newDisplayLine = display.newText(currentLine, 0, (size * 1.3) * (lineCount - 1), font, size)
-    newDisplayLine:setTextColor(color[1], color[2], color[3])
-    result:insert(newDisplayLine)
-    lineCount = lineCount + 1
-    currentLine = ''
-    currentLineLength = 0
-  end
-  result:setReferencePoint(display.TopLeftReferencePoint)
-  return result
-end
-
 local function finishCorrect()
 -- Mark progress for this question in database
 				--set the database path
@@ -151,13 +92,10 @@ local function finishCorrect()
 						end
 					end
 
--- Submit progress to database
+				-- Submit progress to database
 					local sql = "INSERT INTO questions_completed (progress_id, question_completed) VALUES (".._G.prog_id..","..qID..")"
 					database2:exec(sql)
 					print (sql)
-				
-			successMessage.alpha = 1
-			successMessage.isVisible = true
 				
 				database2:close()
 				director:changeScene("success")
@@ -198,26 +136,82 @@ end
 				thisBtn.y = (index-1)*thisBtn.height
 			end
 		end
+		
+		thisBtnGroup:setReferencePoint( display.BottomCenterReferencePoint )
 		thisBtnGroup.x = groupXPos; thisBtnGroup.y = groupYPos
+		
 		return thisBtnGroup
 	end
-	local myDescr = autoWrappedText(questionDescription, native.systemFont, 20, {210, 170, 100}, display.contentWidth);
+	
+	local myDescr = display.newRetinaText (questionDescription, 0,0, display.contentWidth-10,0, native.systemFont, 18)
+	myDescr:setReferencePoint( display.TopLeftReferencePoint )
 	myDescr.x = 10
-	myDescr.y = 75
+	myDescr.y = 50
 	localGroup:insert(myDescr)
 
-
-	local myChoices = makeBtns(choices,"images/btn_choice.png","vertical",_W/2,200)
-	localGroup:insert(myChoices)
+	local myChoices = makeBtns(choices,"images/btn_choice.png","vertical",_W/2,display.contentHeight-75)
+	localGroup:insert(myChoices)	
 	
-	successMessage = display.newImageRect("images/btn_return.png",216, 72)
-	successMessage:setReferencePoint(display.CenterReferencePoint)
-	successMessage.x = _W/2
-	successMessage.y = 75
-	successMessage:addEventListener("touch",changeScene)
-	successMessage.alpha = 0
-	successMessage.isVisible = false
+-----------------------------------------------------------------------------------------------------------------------------
 
-	localGroup:insert(successMessage)
+-- Begin tabbar stuff
+
+-----------------------------------------------------------------------------------------------------------------------------	
+	
+	-- Load bottom bar image and icon buttons
+	
+	local function onBtnPress( event )
+	
+		if (event.name == "tabButtonPress") then
+			print (event.target.id)
+			audio.play(click)
+			director:changeScene(event.target.id,"fade")
+		end
+		
+		return true
+    end
+ 
+    local tabButtons = {
+        {
+			id = "picker",
+			baseDir = system.ResourceDirectory,
+			--label="quests",
+            up="images/btn_picker44x44.png",
+            down="images/btn_picker44x44.png",
+            width=44, height=44,
+            onPress=onBtnPress,
+            --selected=true,
+			scene = "picker"
+        },
+        {
+			id = "map",
+			baseDir = system.ResourceDirectory,
+			--label="map",
+            up="images/btn_map44x44.png",
+			down="images/btn_map44x44.png",
+            width=44, height=44,
+            onPress=onBtnPress,
+			scene = "map"
+        },
+		 {	
+			id = "bag",
+			baseDir = system.ResourceDirectory,
+			--label="cards",
+            up="images/btn_bag44X44.png",
+			down="images/btn_bag44X44.png",
+            width=44, height=44,
+            onPress=onBtnPress,
+			scene = "bag"
+        },
+    }
+	
+    local bottomBar = widget.newTabBar{
+		baseDir = system.ResourceDirectory,
+		background = "images/bottombar320x54.png",
+        top=display.contentHeight - 50,
+        buttons=tabButtons
+    }	
+	
+	
 	return localGroup
 end

@@ -89,12 +89,14 @@ for i = 1,4 do
 	-- Create four locations to drop photos
 
 	local dropContainer = display.newImageRect(imageTable[i],system.DocumentsDirectory,_W/2.75,_H/6)
-localGroup:insert(dropContainer)
 	dropContainer.x = xValue
 	dropContainer.y = yValue
 	--dropContainer:setFillColor(0)
 	dropContainer.strokeWidth=1
 	dropContainer:setStrokeColor(250,250,250)
+	
+	localGroup:insert(dropContainer)
+	
 	if (i == 1) or (i == 3) then
 		xValue = xValue *2.8
 	end
@@ -227,6 +229,7 @@ dragImage = display.newImageRect(dragTable[randomNumber],system.DocumentsDirecto
 	if (i == 1) or (i == 3) then
 		xValue = xValue *2.75
 	end
+	
 	if (i == 2) then
 		xValue = xValue / 2.75
 		yValue = yValue *1.33
@@ -243,7 +246,13 @@ dragImage = display.newImageRect(dragTable[randomNumber],system.DocumentsDirecto
 			randomNumber = 1
 		end
   end
+--[[  
+  draggables:setReferencePoint( display.CenterReferencePoint )
+  draggables.x = display.contentWidth/2
+  draggables.y = 10 + draggables.height/2
+]] 
   localGroup:insert(draggables)
+  
 end
 
 if event then

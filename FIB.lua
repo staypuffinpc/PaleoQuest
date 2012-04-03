@@ -1,6 +1,8 @@
 --FIB.lua for Fill-In the Blank Questions
 module(..., package.seeall)
 
+local widget = require "widget"
+
 --init globals
 _H = display.contentHeight
 _W = display.contentWidth
@@ -125,68 +127,6 @@ answer1 = native.newTextField( _W/2-100, _H/2, 200, 50,
 --correct1 = "carnivore"
 
 ----------------------------------------
--- This function wraps the text on the screen for the stem text
-----------------------------------------
-
-local function autoWrappedText(text, font, size, color, width)
---print("text: " .. text)
-  if text == '' then return false end
-  font = font or native.systemFont
-  size = tonumber(size) or 12
-  color = color or {255, 255, 255}
-  width = width or display.stageWidth
- 
-  local result = display.newGroup()
-  local lineCount = 0
-  -- do each line separately
-  for line in string.gmatch(text, "[^\n]+") do
-    local currentLine = ''
-    local currentLineLength = 0 -- the current length of the string in chars
-    local currentLineWidth = 0 -- the current width of the string in pixs
-    local testLineLength = 0 -- the target length of the string (starts at 0)
-    -- iterate by each word
-    for word, spacer in string.gmatch(line, "([^%s%-]+)([%s%-]*)") do
-      local tempLine = currentLine..word..spacer
-      local tempLineLength = string.len(tempLine)
-      -- test to see if we are at a point to try to render the string
-      if testLineLength > tempLineLength then
-        currentLine = tempLine
-        currentLineLength = tempLineLength
-      else
-        -- line could be long enough, try to render and compare against the max width
-        local tempDisplayLine = display.newText(tempLine, 0, 0, font, size)
-        local tempDisplayWidth = tempDisplayLine.width
-        tempDisplayLine:removeSelf();
-        tempDisplayLine=nil;
-        if tempDisplayWidth <= width then
-          -- line not long enough yet, save line and recalculate for the next render test
-          currentLine = tempLine
-          currentLineLength = tempLineLength
-          testLineLength = math.floor((width*0.9) / (tempDisplayWidth/currentLineLength))
-        else
-          -- line long enough, show the old line then start the new one
-          local newDisplayLine = display.newText(currentLine, 0, (size * 1.3) * (lineCount - 1), font, size)
-          newDisplayLine:setTextColor(color[1], color[2], color[3])
-          result:insert(newDisplayLine)
-          lineCount = lineCount + 1
-          currentLine = word..spacer
-          currentLineLength = string.len(word)
-        end
-      end
-    end
-    -- finally display any remaining text for the current line
-    local newDisplayLine = display.newText(currentLine, 0, (size * 1.3) * (lineCount - 1), font, size)
-    newDisplayLine:setTextColor(color[1], color[2], color[3])
-    result:insert(newDisplayLine)
-    lineCount = lineCount + 1
-    currentLine = ''
-    currentLineLength = 0
-  end
-  result:setReferencePoint(display.TopLeftReferencePoint)
-  return result
-end
-
-----------------------------------------
 -- This code is the function to verify the answer
 ----------------------------------------
 
@@ -257,7 +197,7 @@ local answerVerify = function (event)
 		if(wrongAnswer.alpha == 0) then
 			wrongAnswer.alpha = 1
 		else 
-			wrongAnswer = display.newText("Sorry! Try Again", 0, 0,"Helvetica",24)
+			wrongAnswer = display.newRetinaText("Sorry! Try Again", 0, 0,"Helvetica",18)
 			wrongAnswer:setReferencePoint(display.CenterReferencePoint)
 			wrongAnswer.x = _H/6 * 2
 			wrongAnswer.y = _W/6 * 4
@@ -278,17 +218,80 @@ local answerBtn = ui.newButton{
 	default = "btn_answer.png",
 	over = "btn_answer1.png",
 	x = _W/2,
-	y = _H - 75,
+	y = _H - 125,
 	--onPress=answerVerify
 	}
+
+
+-----------------------------------------------------------------------------------------------------------------------------
+
+-- Begin tabbar stuff
+
+-----------------------------------------------------------------------------------------------------------------------------	
+
+
+-- Load bottom bar image and icon buttons
+	
+	local function onBtnPress( event )
+	
+		if (event.name == "tabButtonPress") then
+			print (event.target.id)
+			audio.play(click)
+			director:changeScene(event.target.id,"fade")
+		end
+		
+		return true
+    end
+ 
+    local tabButtons = {
+        {
+			id = "picker",
+			baseDir = system.ResourceDirectory,
+			--label="quests",
+            up="images/btn_picker44x44.png",
+            down="images/btn_picker44x44.png",
+            width=44, height=44,
+            onPress=onBtnPress,
+            --selected=true,
+			scene = "picker"
+        },
+        {
+			id = "map",
+			baseDir = system.ResourceDirectory,
+			--label="map",
+            up="images/btn_map44x44.png",
+			down="images/btn_map44x44.png",
+            width=44, height=44,
+            onPress=onBtnPress,
+			scene = "map"
+        },
+		 {	
+			id = "bag",
+			baseDir = system.ResourceDirectory,
+			--label="cards",
+            up="images/btn_bag44X44.png",
+			down="images/btn_bag44X44.png",
+            width=44, height=44,
+            onPress=onBtnPress,
+			scene = "bag"
+        },
+    }
+	
+    local bottomBar = widget.newTabBar{
+		baseDir = system.ResourceDirectory,
+		background = "images/bottombar320x54.png",
+        top=display.contentHeight - 50,
+        buttons=tabButtons
+    }	
 
 
 ----------------------------------------
 -- This is the variable to display the stem
 ----------------------------------------
-local askQuestion = autoWrappedText(questionDescription, native.systemFont, 20, {210, 170, 100}, display.contentWidth-10);
+local askQuestion = display.newRetinaText(questionDescription, 0,0, display.contentWidth-10,0, native.systemFont, 18);
+askQuestion:setReferencePoint (display.TopLeftReferencePoint )
 askQuestion.x = 10
-askQuestion.y = 75
+askQuestion.y = 50
 
 ----------------------------------------
 -- This code runs the answer verify function when the enter button is tapped

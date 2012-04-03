@@ -7,6 +7,7 @@ local tableView = require("tableView")
 display.setStatusBar( display.HiddenStatusBar )
 
 local ui = require("ui")
+local widget = require "widget"
 
 --include sqlite db
 require "sqlite3"
@@ -34,7 +35,6 @@ local dTopic
 local dLoc
 local dDiff
 local id
-
 
 local dText1
 local dText2
@@ -124,7 +124,8 @@ for row in db:nrows(sqlQuery) do
 	data[q].qTotal = total
 	data[q].uCompleted = completed	
 	q = q + 1
- end
+end
+
 
 local function autoWrappedText(text, font, size, color, width)
 	--print("text: " .. text)
@@ -182,7 +183,13 @@ local function autoWrappedText(text, font, size, color, width)
 	  end
 	  result:setReferencePoint(display.TopLeftReferencePoint)
 	  return result
-	end
+end
+
+----------------------------------------------------------------------------------------------------------------------------
+
+-- Start long function to choose avatar
+
+-----------------------------------------------------------------------------------------------------------------------------	
 
 function listButtonRelease( event )
 		self = event.target
@@ -246,7 +253,7 @@ function listButtonRelease( event )
 		transition.to(startBtn, {time=400, x=-math.floor(startBtn.width/2) + display.contentWidth - 6, transition=easing.outExpo })
 		transition.to(startBtn, {time=1000, alpha=1 })	
 		delta, velocity = 0, 0
-	end
+end
 
 function backBtnRelease( event )
 	print("back button released")
@@ -357,7 +364,6 @@ function avatarChooserRed(event)
 end
 
 
-
 function new()
 
 	localGroup = display.newGroup()
@@ -446,6 +452,18 @@ function new()
 
 	localGroup:insert(detailScreen)
 	
+----------------------------------------------------------------------------------------------------------------------------
+
+-- End avatar picker / Start Quest picker
+
+-----------------------------------------------------------------------------------------------------------------------------	
+	
+----------------------------------------------------------------------------------------------------------------------------
+
+-- Start TableView stuff
+
+-----------------------------------------------------------------------------------------------------------------------------	
+
 	--add My List
 	myList = tableView.newList{
 		data=data,
@@ -489,6 +507,12 @@ function new()
 	end
 	}
 	localGroup:insert(myList)
+	
+----------------------------------------------------------------------------------------------------------------------------
+
+-- End TableView stuff / Start navHeader stuff
+
+-----------------------------------------------------------------------------------------------------------------------------
 	
 	-- Add nav bar
 	local navBar = ui.newButton{

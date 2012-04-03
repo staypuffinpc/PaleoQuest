@@ -56,6 +56,7 @@ function new()
 	btn_minis.scene = "minis"
 	localGroup:insert(btn_minis)
 	]]
+	
 	local function autoWrappedText(text, font, size, color, width)
 	--print("text: " .. text)
 	  if text == '' then return false end

@@ -41,7 +41,6 @@ function new(params)
 	print(string.lower(id).."Yay.wav")
 	audio.play(mySound)
 	
-	
 	local dino = sf:newSpriteGroup(id)
 	dino:translate(_W/2,_H/2+80)
 	dino.xScale = .8; dino.yScale = .8

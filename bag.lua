@@ -1,8 +1,9 @@
 display.setStatusBar( display.HiddenStatusBar )
 
+local widget = require "widget"
+
 --[[ to do still
 1. when the user answers all the questions correctly, show a quick animation of the card being shrunk and added to their pack of cards.
-2. insert the menubar at the bottom of the screen
 ]]
 
 module(..., package.seeall)
@@ -70,6 +71,7 @@ print("the progress ID is:" .. questInfo.progress_id)
 userDB:close()
 -------------------------// end db stuff //------------------------------
 
+-- Problems with the initial masking
 
 -------------------------// Start mask stuff //------------------------------
 
@@ -86,12 +88,13 @@ function createPuzzlePiece(puzzleImg,maskImg)
 			print("maskImg= "..maskImg)
 			local mask = graphics.newMask(maskImg)
 			--apply the mask to the image
-			print("we do make it past the mask")
 			img:setMask(mask)
+			print("we do make it past the mask")
 		end
 		return img
 	end
 end
+
 
 function new()
 
@@ -118,9 +121,6 @@ function new()
 					localGroup:insert(msgGrp)
 						local id = ""
 		end
-		function goHome()
-			director:changeScene("picker")
-		end
 		
 		--create a sound
 					local avatar = _G.avatarID
@@ -137,10 +137,9 @@ function new()
 					
 					local mySound = audio.loadSound(string.lower(id).."Congratulations.wav")
 					audio.play(mySound)
-
 		
 		timer.performWithDelay(500,showMsg)
-		timer.performWithDelay(4500,goHome)
+
 	else 
 		--show default img (back of the card)
 		local defaultCard = display.newImageRect("images/cards/defaultCard.jpg",320,440)
@@ -156,25 +155,58 @@ function new()
 		localGroup:insert(img)
 	end
 	
+		
+	-- Load bottom bar image and icon buttons
 	
+	local function onBtnPress( event )
 	
+		print (event.target.id)
+		audio.play(click)
+		director:changeScene(event.target.id,"fade")
+		
+		return true
+    end
+ 
+    local tabButtons = {
+        {
+			id = "picker",
+			baseDir = system.ResourceDirectory,
+			--label="quests",
+            up="images/btn_picker44x44.png",
+            down="images/btn_picker44x44.png",
+            width=44, height=44,
+            onPress=onBtnPress,
+            --selected=true,
+			scene = "picker"
+        },
+        {
+			id = "map",
+			baseDir = system.ResourceDirectory,
+			--label="map",
+            up="images/btn_map44x44.png",
+			down="images/btn_map44x44.png",
+            width=44, height=44,
+            onPress=onBtnPress,
+			scene = "map"
+        },
+		 {	
+			id = "bag",
+			baseDir = system.ResourceDirectory,
+			--label="cards",
+            up="images/btn_bag44X44.png",
+			down="images/btn_bag44X44.png",
+            width=44, height=44,
+            onPress=onBtnPress,
+			scene = "bag"
+        },
+    }
 	
-	---------------------------
-	--btn to return to prev. scene
-	---------------------------
-	local successMessage = display.newRect(0,0,176,33)
-				successMessage.scene = "map"
-				local messageLabel = display.newText("Return to Hunt ...", successMessage.width/4,0,"Helvetica",13)
-				messageLabel:setTextColor(0,0,0)
-	local successGroup = display.newGroup()
-				successGroup:insert(successMessage)
-				successGroup:insert(messageLabel)
-				successGroup:setReferencePoint(display.CenterReferencePoint)
-				successGroup.x = _W/2
-				successGroup.y = _H/3*2
-				successGroup.alpha = 1
-				localGroup:insert(successGroup)
-				successMessage:addEventListener("touch",changeScene)
-
+    local bottomBar = widget.newTabBar{
+		baseDir = system.ResourceDirectory,
+		background = "images/bottombar320x54.png",
+        top=display.contentHeight - 50,
+        buttons=tabButtons
+    }	
+	
 	return localGroup
 end
