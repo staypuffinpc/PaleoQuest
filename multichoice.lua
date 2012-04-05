@@ -4,12 +4,10 @@ module(..., package.seeall)
 
 local widget = require "widget"
 
-
 local questionDescription
 local qID
 local correct
 local choices
-
 
 new = function (params)
 
@@ -27,6 +25,7 @@ function changeScene(event)
 			director:changeScene("success","fade")
 		end
 	end
+	
 --import the ui file to create buttons
 local ui = require("ui")
 

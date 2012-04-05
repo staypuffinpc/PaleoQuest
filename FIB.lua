@@ -78,7 +78,8 @@ local errorSound = audio.loadSound("incorrect.wav")
 local answer1 = ""
 local wrongAnswer = ""
 
-	-- TextField Listener
+
+-- TextField Listener
 local function fieldHandler( getObj )
         
         return function( event )
@@ -132,36 +133,33 @@ answer1 = native.newTextField( _W/2-100, _H/2, 200, 50,
 
 local answerVerify = function (event)
 	answer1.inputType = "default"
-	--answerText = "barrel"
 	answerText = answer1.text;
 	answerText = (string.lower(answerText))
-	--print (string.upper(answer1))
-	--print(answer1)
+
 	
 	if(correct == answerText) then
 		audio.play(correctSound)
 		director:changeScene("success")
 	
-		
 		-- Mark progress for this question in database
 		--set the database path
 			local user_dbpath = system.pathForFile("tp_user.sqlite")
 
 		--open dbs
 			local database2 = sqlite3.open(user_dbpath)
+			
+		-- Submit progress to database
+		local sql = "INSERT INTO questions_completed (progress_id, question_completed) VALUES (".._G.prog_id..","..qID..")"
+			database2:exec(sql)
+		print (sql)
 
 		--handle the applicationExit to close the db
-			local function onSystemEvent(event)
-				if(event.type == "applicationExit") then
-				database2:close()
-			end
+		local function onSystemEvent(event)
+			if(event.type == "applicationExit") then
+			database2:close()
+		end
 	end
-
--- Submit progress to database
-			local sql = "INSERT INTO questions_completed (progress_id, question_completed) VALUES (".._G.prog_id..","..qID..")"
-				database2:exec(sql)
-			print (sql)
-
+			
 --	local titleText = display.newText("You are now at the next scene", 0, 0, native.systemFontBold, 14)
 --	titleText:setTextColor(100, 200, 200)
 --	titleText.x = display.contentWidth/2
@@ -183,7 +181,7 @@ local answerVerify = function (event)
 				localGroup:insert(successGroup)
 				successMessage:addEventListener("touch",changeScene)
 				database2:close()]]
-	end
+end
 
 --[[
 		local params = {correctAnswered = qID}
@@ -235,7 +233,6 @@ local answerBtn = ui.newButton{
 	local function onBtnPress( event )
 	
 		if (event.name == "tabButtonPress") then
-			print (event.target.id)
 			audio.play(click)
 			director:changeScene(event.target.id,"fade")
 		end

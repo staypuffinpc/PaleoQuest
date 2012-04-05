@@ -1,6 +1,3 @@
---to do 
---1. need to run a timer and then move on to the bag, letting itknow I'm coming from success.
-
 module(..., package.seeall)
 
 display.setStatusBar( display.HiddenStatusBar )
@@ -19,6 +16,7 @@ local function moveOn()
 	print("success: "..params.success)
 	director:changeScene(params,"bag")
 end
+
 timer.performWithDelay(2000, moveOn)
 
 function new(params)
