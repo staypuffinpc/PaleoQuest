@@ -108,11 +108,11 @@ function new()
 			if (questInfo.completed == questInfo.totalNum) then
 				--the user has answered all the questions, so don't apply a mask to the img.  There's also no need to show the back of the card
 				local msg = "You've earned the "..questInfo.dino.." card!"
-				local congratsText = display.newText (msg, 20,0, native.systemFont, 24)
+				local congratsText = display.newText (msg, 20,0, native.systemFontBold, 16)
 				congratsText:setReferencePoint( display.CenterReferencePoint )
 				congratsText:setTextColor (255)
 				congratsText.x = _W/2
-				congratsText.y = _H/2
+				congratsText.y = _H/2 + 30
 				
 				--To Do: make sure to add the card to the user's deck in the datbase
 				

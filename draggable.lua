@@ -1,313 +1,341 @@
 module(..., package.seeall)
 
+local widget = require "widget"
+
+--turn on physics, set gravity to 0, etc.
+local physics = require "physics"
+physics.start()
+physics.setGravity(0,0)
+
+
+--Counter to control the reset function
+local rNum = 0
+--Coutner to track the number of photos snapped correctly
+local picsMatched = 0
+
+
+--New Director function
 new = function (params)
 
-local photosPlaced = 0
-local successGroup = display.newGroup()
-successGroup.alpha = 0
--- Parameters
-local question_ID
-
-if type(params) == "table" then
-	print("It is a table.")
-	question_ID = params.questionID
-end
+	local dinoGroup = display.newGroup ()
+	local skullGroup = display.newGroup ()
+	local localGroup = display.newGroup ()
 	
+	-- Parameters
+	local question_ID
 
---function new()
-	local localGroup = display.newGroup()
-function changeScene(event)
+	if type(params) == "table" then
+		print("It is a table.")
+		question_ID = params.questionID
+	end
+		
+	function changeScene(event)
 		if(event.phase == "ended") then
-			--audio.play(click)
 			director:changeScene(event.target.scene,"fade")
 		end
 	end
-print ("Map question passed: "..question_ID)	
-
--- Load the relevant LuaSocket modules
-local http = require("socket.http")
-local ltn12 = require("ltn12")
-
--- include sqlite library
-require "sqlite3"
-
---set the database path
-local dbpath = system.pathForFile("tp_quests.sqlite")
-
---open dbs
-database = sqlite3.open(dbpath)
-
---handle the applicationExit to close the db
-local function onSystemEvent(event)
-	if(event.type == "applicationExit") then
-		database:close()
-	end
-end
-
---get image names
-local sql = "SELECT * FROM type_draggable WHERE question_id = "..question_ID
-print (sql)
-local imageTable = {}
-local dragTable = {}
-local stem
-for row in database:nrows(sql) do	
-	imageTable[1] = row.item_1
-	imageTable[2] = row.item_2
-	imageTable[3] = row.item_3
-	imageTable[4] = row.item_4
-	dragTable[3] = row.item_3_match
-	dragTable[1] = row.item_1_match
-	dragTable[4] = row.item_4_match
-	dragTable[2] = row.item_2_match
-	stem = row.stem
-
-end
-
-xValue = _W/3.8
-yValue = _H/6.2
-
-print("Beginning Y value: "..yValue)
-
-for i = 1,4 do
-
--- Create local file for saving data
-local path = system.pathForFile( imageTable[i], system.DocumentsDirectory )
-myFile = io.open( path, "w+b" ) 
-
-	-- Request remote file and save data to local file
-http.request{
-    url = "http://christijandraper.com/coronaImages/"..imageTable[i] ,
-    sink = ltn12.sink.file(myFile),
-}
-
-print("got here")
- 
-end
-
-
-----------------------------------------------------------------------------------------------------------------------------------------------------
-
--- Start new physics dragging
-
-----------------------------------------------------------------------------------------------------------------------------------------------------
-
-
-
-
-dropTainer = {}
-for i = 1,4 do
-	-- Create four locations to drop photos
-
-	local dropContainer = display.newImageRect(imageTable[i],system.DocumentsDirectory,_W/2.75,_H/6)
-	dropContainer.x = xValue
-	dropContainer.y = yValue
-	--dropContainer:setFillColor(0)
-	dropContainer.strokeWidth=1
-	dropContainer:setStrokeColor(250,250,250)
 	
-	localGroup:insert(dropContainer)
-	
-	if (i == 1) or (i == 3) then
-		xValue = xValue *2.8
-	end
-	if (i == 2) then
-		xValue = xValue / 2.8
-		yValue = yValue *2.1
-		
-	end
-	dropTainer[i] = dropContainer
+--	print ("Map question passed: "..question_ID)	
 
-	dropTainer[i].ID = imageTable[i]
-end
--- Create four photos to match each of the four titles
-print("Next Y value: "..yValue)
-function dragPix( event )
--- Find the right dropTainer
-	local objectNum
+--------------------/Begin DB stuff/---------------------------------------------
 
-	for num = 1,4 do
-		if (string.sub(dropTainer[num].ID,1,-5).."Skull" == string.sub(event.target.ID,1,-5)) then
-			objectNum = num
+	-- include sqlite library
+	require "sqlite3"
+
+	--set the database path
+	local dbpath = system.pathForFile("tp_quests.sqlite")
+
+	--open dbs
+	database = sqlite3.open(dbpath)
+
+	--handle the applicationExit to close the db
+	local function onSystemEvent(event)
+		if(event.type == "applicationExit") then
+			database:close()
 		end
 	end
-    if event.phase == "began" then
-        event.target.markX = event.target.x    -- store x location of object
-        event.target.markY = event.target.y    -- store y location of object
 
+--------------------/End DB stuff/---------------------------------------------
+
+--------------------/Begin functions/------------------------------------------
+
+	-- Function to snap objects together when a match is made
+	local function onCollision ( event )
 		
-    elseif event.phase == "moved" then
-        local x = (event.x - event.xStart) + event.target.markX
-        local y = (event.y - event.yStart) + event.target.markY
-        display.getCurrentStage():setFocus(event.target)
+		local dino = event.target
+		local skull = event.other
 		
-        event.target.x, event.target.y = x, y    -- move object based on calculations above
-
--- Snap to correct location
-		if (x/dropTainer[objectNum].x > .7) and (y/dropTainer[objectNum].y > .7) 
-			and (x/dropTainer[objectNum].x < 1.3) and (y/dropTainer[objectNum].y < 1.3) then
-			event.target.x = dropTainer[objectNum].x
-			event.target.y = dropTainer[objectNum].y
-			
-			event.target:removeEventListener("touch",dragPix)
-			system.vibrate()
-			display.getCurrentStage():setFocus(nil)
-			
-			photosPlaced = photosPlaced + 1
-
--- Check for success in matching parts
-			if photosPlaced == 4 then
-				local win = audio.loadSound("win.wav")
-				audio.play(win)
-				print("4 photos placed")
+		if event.phase == "began" then
+			if (string.sub(skull.id, 6,6)) == (string.sub(dino.id, 5,5)) then
+				transition.to (skull, { time=50, x = dino.x , y = dino.y})
+				system.vibrate()
+				display.getCurrentStage():setFocus(nil)
 				
--- Mark progress for this question in database
-				--set the database path
+				--update the number of pics matched
+				picsMatched = picsMatched + 1
+				print("Made"..picsMatched.."matches")
+				
+				--Queue victory function if all pics are matched				
+				if picsMatched == 4 then
+					
+					-- Mark progress for this question in database
+					--set the database path
 					local user_dbpath = system.pathForFile("tp_user.sqlite")
 
-				--open dbs
+					--open dbs
 					local database2 = sqlite3.open(user_dbpath)
 
-				--handle the applicationExit to close the db
+					--handle the applicationExit to close the db
 					local function onSystemEvent(event)
-						if(event.type == "applicationExit") then
+						if (event.type == "applicationExit") then
 							database2:close()
 						end
 					end
 
--- Submit progress to database
+					-- Submit progress to database
 					local sql = "INSERT INTO questions_completed (progress_id, question_completed) VALUES (".._G.prog_id..","..question_ID..")"
 					database2:exec(sql)
 					print (sql)
-
-				local successMessage = display.newRect(0,0,176,33)
-				successMessage.scene = "bag"
-				local messageLabel = display.newText("Return to Hunt ...", successMessage.width/4,0,"Helvetica",13)
-				messageLabel:setTextColor(0,0,0)
---[[
-				successGroup:insert(successMessage)
-				successGroup:insert(messageLabel)
-				successGroup:setReferencePoint(display.CenterReferencePoint)
-				successGroup.x = _W/2
-				successGroup.y = _H/3*2
-				successGroup.alpha = 1
-				localGroup:insert(successGroup)
-				successMessage:addEventListener("touch",changeScene)
---]]
-
-director:changeScene("success")
+					
+					director:changeScene("success","fade")
+				end
 			end
-
 		end
+		
+		return true
 
-	elseif event.phase == "ended" and event.target.x ~= dropTainer[objectNum].x and event.target.y ~= dropTainer[objectNum].y then
-			event.target.x = event.target.markX
-			event.target.y = event.target.markY
-			display.getCurrentStage():setFocus(nil)
-	
-    end
-  return true
-end
-
-
-for i = 1,4 do
-
--- Create local file for saving data
-local path = system.pathForFile( dragTable[i], system.DocumentsDirectory )
-myFile = io.open( path, "w+b" ) 
-	-- Request remote file and save data to local file
-http.request{
-    url = "http://christijandraper.com/coronaImages/"..dragTable[i] ,
-    sink = ltn12.sink.file(myFile),
-}
- 
-end
-
-function placePhotos(event)
-
-
-local function setPhotos()
-
- draggables = display.newGroup()
- local randomNumber = math.random(4)
-for i = 1,4 do
-
--- Create four droppable photos
-	
-dragImage = display.newImageRect(dragTable[randomNumber],system.DocumentsDirectory,_W/2.8,_H/6)
-	dragImage.x = xValue
-	dragImage.y = yValue*.75
-	if (i == 1) or (i == 3) then
-		xValue = xValue *2.75
-	end
-	
-	if (i == 2) then
-		xValue = xValue / 2.75
-		yValue = yValue *1.33
 	end
 
-	dragImage.j = randomNumber
-	dragImage.ID = dragTable[randomNumber]
-	dragImage.l = "isDraggable"
-	dragImage:addEventListener( "touch", dragPix )
-	draggables:insert(dragImage)
-	if(randomNumber < 4) then
-			randomNumber = randomNumber+1
-		else
-			randomNumber = 1
-		end
-  end
---[[  
-  draggables:setReferencePoint( display.CenterReferencePoint )
-  draggables.x = display.contentWidth/2
-  draggables.y = 10 + draggables.height/2
-]] 
-  localGroup:insert(draggables)
-  
-end
 
-if event then
-
-	if event.phase == "began" then
-	
-	for k = draggables.numChildren, 1 , -1 do
-		if(draggables[k].l == "isDraggable") then
-			draggables[k]:removeEventListener("touch",dragPix)
-			draggables[k]:removeSelf()
+	-- Function to allow skullPic to be dragged
+	local function skullDrag ( event )
+		
+		local t = event.target
+		local phase = event.phase
+		
+		if "began" == phase then
+			display.getCurrentStage():setFocus(t)
+			t.isFocus = true
 			
+			--Store inital position
+			t.x0 = event.x - t.x
+			t.y0 = event.y - t.y
+			
+		elseif t.isFocus then
+			if "moved" == phase then
+				t.x = event.x - t.x0
+				t.y = event.y - t.y0
+			elseif "ended" == phase then
+				display.getCurrentStage():setFocus(nil)
+				t.isFocus = false
+			end
 		end
-	end
-	successGroup.alpha = 0
-	photosPlaced = 0
-	xValue = _W/3.75
-	yValue = yValue/1.33
-	setPhotos()
+		
+		return true	
 	end
 
-else 
-xValue = _W/3.75
-yValue = yValue *2.1
-setPhotos()
+
+	-- Create a function that generates a random array of numbers for making the pics show in a random order
+	-- from http://developer.anscamobile.com/forum/2011/12/06/code-optimization-generate-random-list-numbers-no-repeats
+	function randomsNonRepeat(low,high, num)
+		local numList = {}
+		local randoms={}
+		local temp
+		
+		for i=low, high do
+			numList[#numList + 1] = i
+		end
+		
+		for j=1, num do
+			temp=math.random(low, #numList)
+			randoms[#randoms+1] = numList[temp]
+			table.remove(numList, temp)
+		end
+		
+		return randoms
+	end
 
 
-end
-end
-placePhotos()
+	--Function to reset the pics
+	local function resetPics ()
+		
+		print (localGroup.numChildren)
+		
+		--Remove all current skulls
+		if rNum == 0 then
+			localGroup:remove(2)
+		else
+			localGroup:remove(5)
+		end
+		
+		--Generate new skulls
+		--Random order for skull pics
+		local randSkulls = randomsNonRepeat(1,4, 4)
+		
+		local skullGroup = display.newGroup()
 
-local buttonGroup = display.newGroup()
-local button = display.newRect(0,0,88,33)
+		--Dynamically generate dino skulls
+		for i=1,4 do
+			
+			local skull = "skull"..randSkulls[i]
+			local skullPath = "images/"..skull..".jpg"
 
-buttonLabel = display.newText("Reset", button.width/3,0,"Helvetica",13)
-buttonLabel:setTextColor(0,0,0)
+			local skullPic = display.newImageRect (skullPath,90,60)
+			skullPic.id = skull
+			skullPic:setReferencePoint ( display.CenterReferencePoint )
+			skullPic.x = skullPic.width
+			skullPic.y = skullPic.height * 1.2 * i
+			skullPic:addEventListener("touch", skullDrag )
+			skullGroup:insert(skullPic)
 
-buttonGroup:insert(button)
-buttonGroup:insert(buttonLabel)
-buttonGroup:setReferencePoint(display.CenterReferencePoint)
-buttonGroup.x = _W/2
-buttonGroup.y = _H/3*2.85
-stemLabel = display.newText(stem,30,_H/3*2.5,"Helvetica",16)
-stemLabel:setTextColor(255,255,255)
+			-- Add physics to skullPic to allow dinoPic sensor to detect it
+			physics.addBody(skullPic)
+			skullPic.bodyType = "kinematic"
+		end
 
-localGroup:insert(buttonGroup)
-button:addEventListener("touch",placePhotos)
+		skullGroup:setReferencePoint ( display.TopCenterReferencePoint )
+		skullGroup.y = 30
+		localGroup:insert(skullGroup)
+		
+		rNum = rNum + 1
+		picsMatched = 0
+	end
+
+--------------------/End Functions/---------------------------------------------
+
+--------------------/Begin Objects/---------------------------------------------
+
+	--Random order for dino pics
+	local randDinos = randomsNonRepeat(1,4, 4)
+	
+	--Dynamically generate initial dino images
+	for i=1,4 do
+		
+		local dino = "dino"..randDinos[i]
+		local dinoPath = "images/"..dino..".jpg"
+
+		local dinoPic = display.newImageRect (dinoPath,90,60)
+		dinoPic.id = dino
+		dinoPic:setReferencePoint ( display.CenterReferencePoint )
+		dinoPic.y = dinoPic.height * 1.2 * i
+		dinoPic.x = display.contentWidth - dinoPic.width
+		dinoPic:addEventListener ( "collision", onCollision )
+		dinoGroup:insert(dinoPic)
+
+		-- Make dinoPic a snesor to detect if the correct skull is dragged over it
+		physics.addBody( dinoPic )
+		dinoPic.isSensor = "true"
+
+	end
+
+	dinoGroup:setReferencePoint ( display.TopCenterReferencePoint )
+	dinoGroup.y = 30
+	localGroup:insert(dinoGroup)
+
+	--Random order for skull pics
+	local randSkulls = randomsNonRepeat(1,4, 4)
+
+	--Dynamically generate dino skulls
+	for i=1,4 do
+		
+		local skull = "skull"..randSkulls[i]
+		local skullPath = "images/"..skull..".jpg"
+
+		local skullPic = display.newImageRect (skullPath, 90,60)
+		skullPic.id = skull
+		skullPic:setReferencePoint ( display.CenterReferencePoint )
+		skullPic.x = skullPic.width
+		skullPic.y = skullPic.height * 1.2 * i
+		skullPic:addEventListener("touch", skullDrag )
+		skullGroup:insert(skullPic)
+
+		-- Add physics to skullPic to allow dinoPic sensor to detect it
+		physics.addBody(skullPic)
+		skullPic.bodyType = "kinematic"
+	end
+
+	skullGroup:setReferencePoint ( display.TopCenterReferencePoint )
+	skullGroup.y = 30
+	localGroup:insert(skullGroup)
+
+
+	-- Create instructions
+	local instructionsText = display.newText ("Drag the skull to its dino", 0,0, native.systemFontBold, 12)
+	instructionsText:setReferencePoint ( display.CenterReferencePoint )
+	instructionsText.x = display.contentWidth/2
+	instructionsText.y = skullGroup.height + 65
+
+
+	-- Create a reset button
+	local resetBtn = widget.newButton{
+			id = "btn001",
+			left = display.contentWidth/2 - 30,
+			top = instructionsText.y + 30,
+			label = "Reset",
+			width = 60, height = 30,
+			cornerRadius = 12,
+			fontSize = 12,
+			strokeWidth = 6,
+			onPress = resetPics
+		}
+	
+--------------------/End Objects/--------------------------------------------
+
+--------------------/Begin tabbar stuff/--------------------------------------------
+
+	-- Load bottom bar image and icon buttons
+		
+		local function onBtnPress( event )
+		
+			if (event.name == "tabButtonPress") then
+				audio.play(click)
+				director:changeScene(event.target.id,"fade")
+			end
+			
+			return true
+		end
+	 
+		local tabButtons = {
+			{
+				id = "picker",
+				baseDir = system.ResourceDirectory,
+				--label="quests",
+				up="images/btn_picker44x44.png",
+				down="images/btn_picker44x44.png",
+				width=44, height=44,
+				onPress=onBtnPress,
+				--selected=true,
+				scene = "picker"
+			},
+			{
+				id = "map",
+				baseDir = system.ResourceDirectory,
+				--label="map",
+				up="images/btn_map44x44.png",
+				down="images/btn_map44x44.png",
+				width=44, height=44,
+				onPress=onBtnPress,
+				scene = "map"
+			},
+			 {	
+				id = "bag",
+				baseDir = system.ResourceDirectory,
+				--label="cards",
+				up="images/btn_bag44X44.png",
+				down="images/btn_bag44X44.png",
+				width=44, height=44,
+				onPress=onBtnPress,
+				scene = "bag"
+			},
+		}
+		
+		local bottomBar = widget.newTabBar{
+			baseDir = system.ResourceDirectory,
+			background = "images/bottombar320x54.png",
+			top=display.contentHeight - 50,
+			buttons=tabButtons
+		}	
+
 	return localGroup
+
 end
