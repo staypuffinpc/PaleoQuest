@@ -120,7 +120,7 @@ function new()
 		if(event.phase == "ended") then
 			audio.play(click)
 			director:changeScene(event.target.scene)
-			print "start button touched"
+--			print "start button touched"
 		end
 	end
 	

@@ -38,7 +38,7 @@ function showHighlight(event)
     local timePassed = system.getTimer() - startTime
  
     if timePassed > 100 then 
-        print("highlight")
+--        print("highlight")
         currentDefault.isVisible = false
         currentOver.isVisible = true
         Runtime:removeEventListener( "enterFrame", showHighlight )
@@ -48,7 +48,7 @@ end
 function newListItemHandler(self, event) 
         local t = currentTarget --could use self.target.parent possibly
         local phase = event.phase
-        print("touch: ".. phase)
+--        print("touch: ".. phase)
  
         local default = self.default
         local over = self.over
@@ -321,7 +321,7 @@ function newList(params)
         currentTarget = listView
 
 		function listView:cleanUp()
-			print("tableView cleanUp")
+--			print("tableView cleanUp")
 			Runtime:removeEventListener("enterFrame", moveCat )
 			Runtime:removeEventListener("enterFrame", scrollList )
             Runtime:removeEventListener( "enterFrame", showHighlight )

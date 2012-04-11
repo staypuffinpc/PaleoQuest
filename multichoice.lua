@@ -15,7 +15,7 @@ if type(params) == "table" then
 	qID = params.questionID
 end
 
-print(qID)
+--print(qID)
 
 localGroup = display.newGroup()
 
@@ -33,7 +33,7 @@ local ui = require("ui")
 require "sqlite3"
 
 --set the database path 
-local path = system.pathForFile("tp_quests.sqlite")
+local path = system.pathForFile("tp_quests.sqlite", system.ResourceDirectory)
 
 --open dbs
 db = sqlite3.open(path)
@@ -48,7 +48,7 @@ end
 
 local sqlQuery = "SELECT * FROM type_multiple_choice WHERE question_id = "..qID
 local rndize = math.random(1,4)
-print(rndize)
+--print(rndize)
 
 db:exec(sqlQuery)
 
@@ -79,7 +79,7 @@ local incorrect_wav = audio.loadSound("incorrect.wav")
 local function finishCorrect()
 -- Mark progress for this question in database
 				--set the database path
-					local user_dbpath = system.pathForFile("tp_user.sqlite")
+					local user_dbpath = system.pathForFile("tp_user.sqlite", system.DocumentsDirectory)
 
 				--open dbs
 					local database2 = sqlite3.open(user_dbpath)
@@ -94,7 +94,7 @@ local function finishCorrect()
 				-- Submit progress to database
 					local sql = "INSERT INTO questions_completed (progress_id, question_completed) VALUES (".._G.prog_id..","..qID..")"
 					database2:exec(sql)
-					print (sql)
+					--print (sql)
 				
 				database2:close()
 				director:changeScene("success")
@@ -162,7 +162,6 @@ end
 	local function onBtnPress( event )
 	
 		if (event.name == "tabButtonPress") then
-			print (event.target.id)
 			audio.play(click)
 			director:changeScene(event.target.id,"fade")
 		end

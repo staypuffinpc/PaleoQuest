@@ -1,6 +1,6 @@
 module(..., package.seeall)
 
-print("This in _H in picker: ".._H)
+--print("This in _H in picker: ".._H)
 local tableView = require("tableView")
 
 --Hide status bar
@@ -74,7 +74,7 @@ local bottomBoundary = display.screenOriginY + 0
 
 --set the database path 
 local path = system.pathForFile("tp_quests.sqlite",system.ResourceDirectory)
-local userPath = system.pathForFile("tp_user.sqlite",system.ResourceDirectory)
+local userPath = system.pathForFile("tp_user.sqlite",system.DocumentsDirectory)
 --open dbs
 db = sqlite3.open(path)
 user_db = sqlite3.open(userPath)
@@ -103,8 +103,8 @@ for row in db:nrows(sqlQuery) do
 	data[q].qTime = row.time
 	data[q].qTopic = row.topic
 	data[q].qPoints = row.points
-	print("this is quest "..row.questID)
-	print("you are user ".._G.userID)
+--	print("this is quest "..row.questID)
+--	print("you are user ".._G.userID)
 	--query the questions to find out how many there are from this quest
 	local qSQL = "SELECT COUNT(question_id) as total FROM quest_questions WHERE quest_id="..row.questID
 	for row in db:nrows(qSQL) do 
@@ -120,7 +120,7 @@ for row in db:nrows(sqlQuery) do
 	for row in user_db:nrows(prog_query) do 
 		completed = row.completed
 	end
-	print("you  have completed "..completed.." of  "..total.." questions")
+--	print("you  have completed "..completed.." of  "..total.." questions")
 	data[q].qTotal = total
 	data[q].uCompleted = completed	
 	q = q + 1
@@ -185,16 +185,55 @@ local function autoWrappedText(text, font, size, color, width)
 	  return result
 end
 
+
+--Reset button to reset all the quest info
+ local onButtonEvent = function (event )
+	if event.phase == "release" then
+		--Include sqlite
+		require "sqlite3"
+		--Open database.  If the file doesn't exist it will be created
+		local path = system.pathForFile("tp_user.sqlite", system.DocumentsDirectory)
+		db = sqlite3.open( path )
+		
+		--Delete user progress
+		local sqlCommand = [[DELETE FROM questions_completed]]
+		db:exec(sqlCommand)
+		director:changeScene("Start","fade")
+		  
+		--Handle the applicationExit event to close the db
+		local function onSystemEvent( event )
+				if( event.type == "applicationExit" ) then              
+					db:close()
+				end
+		end
+		 
+		--setup the system listener to catch applicationExit
+		Runtime:addEventListener( "system", onSystemEvent )			
+		
+	end
+end
+
+local resetBtn = widget.newButton{
+	id = "resetBtn",
+	left = display.contentWidth*.5 - 75,
+	top = display.contentHeight - 43,
+	labelColor = {255,255,255},
+	label = "Reset User Progress",
+	width = 150, height = 28,
+	cornerRadius = 8,
+	onEvent = onButtonEvent
+}
+
 ----------------------------------------------------------------------------------------------------------------------------
 
 -- Start long function to choose avatar
 
------------------------------------------------------------------------------------------------------------------------------	
+----------------------------------------------------------------------------------------------------------------------------
 
 function listButtonRelease( event )
 		self = event.target
 		id = self.id
-				print("Quest ID: "..self.id)
+--				print("Quest ID: "..id)
 		questID = id
 				
 		dTitle = data[id].qTitle
@@ -253,10 +292,13 @@ function listButtonRelease( event )
 		transition.to(startBtn, {time=400, x=-math.floor(startBtn.width/2) + display.contentWidth - 6, transition=easing.outExpo })
 		transition.to(startBtn, {time=1000, alpha=1 })	
 		delta, velocity = 0, 0
+		
+		resetBtn.alpha = 0
+		
 end
 
 function backBtnRelease( event )
-	print("back button released")
+--	print("back button released")
 	
 	detailScreen:remove(dText1)
 	detailScreen:remove(dText2)
@@ -270,13 +312,16 @@ function backBtnRelease( event )
 	transition.to(startBtn, {time=400, x=0 - math.floor(startBtn.width/2) - startBtn.width, transition=easing.outExpo })
 	transition.to(startBtn, {time=10, alpha=0 })
 	delta, velocity = 0, 0
+	
+	resetBtn.alpha = 255
 end
 
 function startBtnRelease(event)
-	print("start button released")
+--	print("start button released")
 	_G.questID = questID
 	_G.avatarID = avatarID
 	director:changeScene("map") --open map.lua file
+	resetBtn:removeSelf()
 end
 
 function changeAvatar()
@@ -327,7 +372,7 @@ function changeAvatar()
 end
 
 function avatarChooserBlue(event)
-	print("Click")
+--	print("Click")
 	avatarID = 1
 	avatarID_desc = "Rex"
 	avatar_text:setTextColor(80,115,165)
@@ -336,7 +381,7 @@ function avatarChooserBlue(event)
 	changeAvatar()
 end
 function avatarChooserGreen(event)
-	print("Click")
+--	print("Click")
 	avatarID = 2
 	avatarID_desc = "Spike"
 	avatar_text:setTextColor(90,145,70)
@@ -345,7 +390,7 @@ function avatarChooserGreen(event)
 	changeAvatar()
 end
 function avatarChooserOrange(event)
-	print("Click")
+--	print("Click")
 	avatarID = 3
 	avatarID_desc = "Amber"
 	avatar_text:setTextColor(220,140,50)
@@ -354,7 +399,7 @@ function avatarChooserOrange(event)
 	changeAvatar()
 end
 function avatarChooserRed(event)
-	print("Click")
+--	print("Click")
 	avatarID = 4
 	avatarID_desc = "Ruby"
 	avatar_text:setTextColor(180,55,55)
@@ -488,21 +533,18 @@ function new()
 		title.x = title.width/2 + 6
 		title.y = 15
 		
-		
 		points =  display.newText( "Completed: " ..row.uCompleted.."/"..row.qTotal, 0, 0, native.systemFontBold, 10 )
 		points:setTextColor(100, 30, 30)
 		g:insert(points)
 		points.x = display.contentWidth - points.width/2
 		points.y = 15
 
-	
 		subtitle = autoWrappedText(row.qDesc, native.systemFont, 12, {0, 0, 0}, display.contentWidth - 24)
 		--subtitle:setTextColor(255,255,255)
 		g:insert(subtitle)
 		subtitle.x = 12
 		subtitle.y = title.y + title.height
 
-		
 		return g
 	end
 	}
@@ -524,7 +566,6 @@ function new()
 	navBar.y = math.floor(display.screenOriginY + navBar.height*0.5)
 	
 	localGroup:insert(navBar)
-	
 	
 	--Add nav header
 	local navHeader = display.newText("Pick an expedition", 0, 0, native.systemFontBold, 16)
@@ -559,7 +600,6 @@ function new()
 	startBtn.alpha = 0
 	
 	localGroup:insert(startBtn)
-
+	
 	return localGroup
 end
-

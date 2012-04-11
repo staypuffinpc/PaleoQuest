@@ -1,5 +1,5 @@
 --map screen
-print ("This is _H: ".._H)
+--print ("This is _H: ".._H)
 module(..., package.seeall)
 
 local widget = require "widget"
@@ -18,8 +18,8 @@ function new(params)
 	require "sqlite3"
 
 	--set the database paths
-	local dbpath = system.pathForFile("tp_quests.sqlite")
-	local dbpath2 = system.pathForFile("tp_user.sqlite")
+	local dbpath = system.pathForFile("tp_quests.sqlite", system.ResourceDirectory)
+	local dbpath2 = system.pathForFile("tp_user.sqlite", system.DocumentsDirectory)
 
 	--open dbs
 	database = sqlite3.open(dbpath)
@@ -37,9 +37,10 @@ function new(params)
 
 	-- Find the user's progress for this quest
 	local sql = "SELECT prog_id FROM progress WHERE user_id = 1 AND quest_id = "..questID
+	print (sql)
 	for row in user_database:nrows(sql) do
 		prog_id = row.prog_id
-		print ("The progress id is established: "..prog_id)
+--		print ("The progress id is established: "..prog_id)
 		_G.prog_id = row.prog_id
 	end
 
@@ -50,7 +51,7 @@ function new(params)
 	local unavailableQuestions = {}
 	for row in user_database:nrows(sql) do
 		unavailableQuestions[i] = row.question_completed
-		print ("The question is unavailable: "..i..": "..row.question_completed)
+--		print ("The question is unavailable: "..i..": "..row.question_completed)
 		i = i+1
 	end
 
@@ -65,29 +66,29 @@ function new(params)
 	local numberCompleted = i-1
 	sql = string.sub(sql,1,-2)
 	sql = sql..")"
-	print (sql.." Minus the last comma")
+--	print (sql.." Minus the last comma")
 
 	i=1
 	local questionTable = {}
 	questionTable[1] = 0
 	for row in database:nrows(sql) do	
 		questionTable[i] = row.question_id
-		print("Question table -- "..questionTable[i])
+--		print("Question table -- "..questionTable[i])
 		i = i+1
 	end
 
 	local questionsRemaining = i - 1
-	print("It breaks here? " .. questionsRemaining .. " And more to boot")
+--	print("It breaks here? " .. questionsRemaining .. " And more to boot")
 	--get question information
 	-- Find out which questions remain to be completed from the quest
 
-	print("Why stop there?")
+--	print("Why stop there?")
 
 	-- Choose which question to deliver)
 	local params = {}
 	if questionsRemaining ~= 0 then
 		local sql = "SELECT question_type,question_location_id FROM questions WHERE question_id = "..questionTable[1]
-		print (sql)
+--		print (sql)
 		params ={
 			questionID = questionTable[1]
 			}
@@ -207,8 +208,8 @@ function new(params)
 	scrollView:insert( imageGroup )
 	
 	-- Create a function that takes as its arguments map coordinates to simulate moving the avatar to a new position	
-	local dx = {-800}
-	local dy = {-1600}
+	local dx = {-860}
+	local dy = {-1440}
 	
 	
 	local function moveDino ()
@@ -233,7 +234,6 @@ function new(params)
 	local function onBtnPress( event )
 	
 		if (event.name == "tabButtonPress") then
-			print (event.target.id)
 			audio.play(click)
 			director:changeScene(params,event.target.id,"fade")
 		elseif (event.phase == "moved") then
@@ -319,8 +319,10 @@ function new(params)
 		avatarColor = "red"
 	end
 	
-	local locationXDivisor
-	local locationYDivisor
+	local locationXDivisor = 5
+	local locationYDivisor = 3
+	
+	--[[
 	if params.question_location == 1 or params.question_location == 5 or (params.question_location == 9) then
 		locationXDivisor = 1
 		if (params.question_location == 1) then
@@ -364,6 +366,7 @@ function new(params)
 	end
 --	print("Location X "..locationXDivisor)
 --	print("Location Y "..locationYDivisor)
+]]
 
 	-- Make clickable dinosaur to advance to question screen
 	markerGroup = display.newGroup()

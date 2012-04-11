@@ -49,7 +49,7 @@ questDB:close()
 
 --now find out how many questions have been answered
 --I first have to grab the progress ID, using the user_id and the quest_id
-local userPath = system.pathForFile("tp_user.sqlite",system.ResourceDirectory)
+local userPath = system.pathForFile("tp_user.sqlite",system.DocumentsDirectory)
 userDB = sqlite3.open(userPath)
 query = "SELECT prog_id FROM progress WHERE user_id=1 AND quest_id=1"
 for row in userDB:nrows(query) do 
@@ -66,13 +66,9 @@ for row in userDB:nrows(query) do
 end
 
 print ("User has answered "..questInfo.completed.." of "..questInfo.totalNum.." questions in this quest")
---
-print ("the progress ID is:" .. questInfo.progress_id)
+--print ("the progress ID is:" .. questInfo.progress_id)
 userDB:close()
 -------------------------// end db stuff //------------------------------
-
-
-
 
 function new()
 			
@@ -118,7 +114,7 @@ function new()
 				
 				local id = ""
 				local avatar = _G.avatarID
-				print("Your avatar is "..avatar)
+				--print("Your avatar is "..avatar)
 							
 				if (avatar == 1) then
 					id = "Rex"

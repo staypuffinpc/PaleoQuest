@@ -43,7 +43,7 @@ new = function (params)
 	require "sqlite3"
 
 	--set the database path
-	local dbpath = system.pathForFile("tp_quests.sqlite")
+	local dbpath = system.pathForFile("tp_quests.sqlite", system.ResourceDirectory)
 
 	--open dbs
 	database = sqlite3.open(dbpath)
@@ -80,7 +80,7 @@ new = function (params)
 					
 					-- Mark progress for this question in database
 					--set the database path
-					local user_dbpath = system.pathForFile("tp_user.sqlite")
+					local user_dbpath = system.pathForFile("tp_user.sqlite", system.DocumentsDirectory)
 
 					--open dbs
 					local database2 = sqlite3.open(user_dbpath)

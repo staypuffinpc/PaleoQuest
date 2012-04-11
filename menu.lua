@@ -16,60 +16,58 @@ function new()
 
 	localGroup = display.newGroup()
 
+	--create variables for images
+	local screenBg = display.newImage("images/screenBg.png");
+	local splashBg = display.newImage("images/splashScreen.png");
 
---create variables for images
-local screenBg = display.newImage("images/screenBg.png");
-local splashBg = display.newImage("images/splashScreen.png");
+	--Create background and insert photo
+	local splash = display.newGroup();
 
+	splash:insert (screenBg)
+	splash:insert (splashBg)
+	localGroup:insert(splash)
 
+	--AUDIO TURNED OFF FOR NOW
+	--play audio theme
+	audio.play(theme)
 
---Create background and insert photo
-local splash = display.newGroup();
+	--local bg = display.newGroup();
+	--bg:insert(screenBg);
 
-splash:insert (screenBg)
-splash:insert (splashBg)
-localGroup:insert(splash)
+	--local splashBG = display.newGroup();
+	--splashBG:insert(splashBg);
 
---AUDIO TURNED OFF FOR NOW
---play audio theme
-audio.play(theme)
+	--[[
+	--setup start button
+	startBtn = ui.newButton{ 
+			default = "startButton.png", 
+			over = "startButton_over.png", 
+			onRelease = startBtnRelease
+		}
+		
+		startBtn.x = _W/2 + startBtn.width
+		startBtn.y = _H - 30
 
---local bg = display.newGroup();
---bg:insert(screenBg);
-
---local splashBG = display.newGroup();
---splashBG:insert(splashBg);
-
---[[
---setup start button
-startBtn = ui.newButton{ 
-		default = "startButton.png", 
-		over = "startButton_over.png", 
-		onRelease = startBtnRelease
-	}
-	
-	startBtn.x = _W/2 + startBtn.width
-	startBtn.y = _H - 30
-
-function begin(event)
-	if(event.phase == "ended" or event.phase == "cancelled") then
-			print("Start Button Pushed")
+	function begin(event)
+		if(event.phase == "ended" or event.phase == "cancelled") then
+				print("Start Button Pushed")
+		end
 	end
-end
 
-startBtn:addEventListener("touch", begin)
-]]
+	startBtn:addEventListener("touch", begin)
+	]]
 
-function loadPicker()
-splash:removeSelf()
-splash = nil
+	function loadPicker()
+	splash:removeSelf()
+	splash = nil
 
---CHANGED TO PICKER TO SPEED DEVELOPMENT
-director:changeScene("Start")
-print("Splash screen terminated handed off to picker" .. _H .. _W)
-end
+	--CHANGED TO PICKER TO SPEED DEVELOPMENT
+	director:changeScene("Start")
+	--print("Splash screen terminated handed off to picker" .. _H .. _W)
+	end
 
-timer.performWithDelay(4000, loadPicker)
+	timer.performWithDelay(4000, loadPicker)
 
-return localGroup
+	return localGroup
+	
 end
